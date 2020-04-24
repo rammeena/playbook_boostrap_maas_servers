@@ -1,7 +1,7 @@
 ---
 - block:
     #- name: cleaning up any unfinished / pending yum transactions
-    #  command: yum-complete-transaction --cleanup-only 
+    #  command: yum-complete-transaction --cleanup-only
 
     - name: Updating server using 'yum update'
       yum:
@@ -52,82 +52,20 @@
         name: firewalld
         state: latest
 
-    - name: Starting firewalld service
+    - name: stopping firewalld service
       systemd:
         name: firewalld
-        state: started
-        enabled: yes
+        state: stopped
+        enabled: no
       tags: firewall
 
-    - name: Allowing custom ssh firewalld port
-      firewalld:
-        port: '{{ custom_ssh_port }}/tcp'
-        permanent: true
-        state: enabled
-      when: custom_ssh_port is defined
-      tags: firewall
-      notify: restart firewalld
-
-    - name: Allowing http firewalld service
-      firewalld:
-        service: http
-        permanent: true
-        state: enabled
-      tags: firewall
-      notify: restart firewalld
-
-    - name: generating random routing table number
-      set_fact:
-        table_num: "{{ 100 | random(start=20) }}"
-      run_once: yes
-
-    - name: generating randome priority for route
-      set_fact:
-        priority: "{{ 500 | random(start=100) }}"
-      run_once: yes
-
-    - name: creating route entries for nic interface
-      template:
-        src: route.j2
-        dest: /etc/sysconfig/network-scripts/route-{{ item }}
-      with_items: "{{ ansible_interfaces[1:] }}"
-      when:
-        - item == 'eth0'
-
-    - name: creating rule table for nic interface
-      template:
-        src: rule.j2
-        dest: /etc/sysconfig/network-scripts/rule-{{ item }}
-      with_items: "{{ ansible_interfaces[1:] }}"
-      when:
-        - item == 'eth0'
-
-    - name: creating interface files for extra nics
-      template:
-        src: nic.j2
-        dest: /etc/sysconfig/network-scripts/ifcfg-{{ item }}
-      with_items: "{{ ansible_interfaces[1:] }}"
-      tags: nics
-
-    - name: Restarting Machine
-      shell: sleep 2 && shutdown -r now "Ansible updates triggered"
-      async: 1
-      poll: 0
-      become: true
-      ignore_errors: true
+    - name: Rebooing Machine
+      reboot:
+        msg: ""Reboot initiated by Ansible, event: system update"
+        reboot_timeout: 600
+        post_reboot_delay: 300
       tags:
         - reboot
         - server_reboot
       when: server_update.changed
       register: server_reboot
-
-    - name: Waiting for server to reboot and come back
-      wait_for:
-        host: "{{ inventory_hostname }}"
-        state: started
-        delay: 15
-        timeout: 60
-      delegate_to: localhost
-      become: false
-      tags: reboot
-      when: server_reboot.changed

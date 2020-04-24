@@ -17,37 +17,30 @@
       tags: basic_packages
 
     - name: Allowing SSH service in ufw firewall
-      ufw: 
+      ufw:
         rule: allow
         port: 22
       tags: firewall
 
     - name: Enabling Logging in ufw firewall service
-      ufw: 
+      ufw:
         logging: on
       tags: firewall
-    
+
 
     - name: Starting ufw firewall service
-      ufw: 
-        state: enabled
-        policy: reject
+      ufw:
+        state: disabled
+        policy: accept
       tags: firewall
 
-    - name: Restarting Machine
-      shell: sleep 2 && shutdown -r now "Ansible updates triggered"
-      async: 1
-      poll: 0
-      become: true
-      ignore_errors: true
-      tags: reboot
-
-    - name: Waiting for server to reboot and come back
-      wait_for: 
-        host: "{{ inventory_hostname }}"
-        state: started 
-        delay: 15 
-        timeout: 30
-      delegate_to: localhost
-      become: false
-      tags: reboot
+    - name: Rebooing Machine
+      reboot:
+        msg: ""Reboot initiated by Ansible, event: system update"
+        reboot_timeout: 600
+        post_reboot_delay: 300
+      tags:
+        - reboot
+        - server_reboot
+      when: server_update.changed
+      register: server_reboot
