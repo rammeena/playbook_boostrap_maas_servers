@@ -1,0 +1,40 @@
+---
+# defaults file for roles/base
+custom_ssh_port: 33433
+soft_files_limit: 65536
+hard_files_limit: 65536
+soft_process_limit: 65536
+hard_process_limit: 65536
+
+redhat:
+  packages:
+    - wget
+    - vim
+    - net-tools
+    - firewalld
+    - telnet
+    - yum-utils
+    - gcc
+    - openssl-devel
+    - gcc-c++
+    - make
+    - atop
+    - bc
+    - psmisc
+
+  selinux: 
+    state: disabled
+    policy: targeted
+  
+debian:
+  packages:
+    - wget
+    - vim
+    - ufw
+    - telnet
+    - gcc
+    - openssl
+    - make
+    - python-software-properties
+    - software-properties-common
+    - atop

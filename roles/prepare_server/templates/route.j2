@@ -1,0 +1,2 @@
+default via {{ hostvars[inventory_hostname]['ansible_default_ipv4']['gateway'] }} dev {{ item }} table {{ table_num }}
+{{ hostvars[inventory_hostname]['ansible_eth0']['ipv4']['network'] }}/{{ hostvars[inventory_hostname]['ansible_eth0']['ipv4']['netmask'] }} dev {{ item }} src {{ hostvars[inventory_hostname]['ansible_eth0']['ipv4']['address'] }} table {{ table_num }}

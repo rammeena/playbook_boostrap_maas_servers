@@ -1,0 +1,6 @@
+---
+- name: Getting Servers Ready
+  hosts: all
+  become: yes
+  roles:
+    - { role: prepare_server }

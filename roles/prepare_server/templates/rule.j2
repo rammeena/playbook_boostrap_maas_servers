@@ -1,0 +1,1 @@
+from {{ hostvars[inventory_hostname]['ansible_eth0']['ipv4']['address'] }}/32 table {{ table_num }} priority {{ priority }}

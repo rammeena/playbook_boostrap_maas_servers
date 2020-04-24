@@ -1,0 +1,133 @@
+---
+- block:
+    - name: cleaning up any unfinished / pending yum transactions
+      command: yum-complete-transaction --cleanup-only 
+
+    - name: Updating server using 'yum update'
+      yum:
+        name: "*"
+        state: latest
+        update_cache: yes
+        exclude: 
+          npm
+          nodejs
+      tags: 
+        - server_update
+        - yum_update
+      register: server_update
+
+    - name: completing any unfinished / pending yum transactions
+      command: yum-complete-transaction
+
+    - name: Installing some necessary packages
+      yum:
+        name: "{{ item }}"
+        state: latest
+        update_cache: yes
+      with_items: "{{ redhat.packages }}"
+      tags: basic_packages
+
+    - name: completing any unfinished / pending yum transactions
+      command: yum-complete-transaction
+    
+    - name: disabling postfix service - user can enable if required
+      systemd:
+        name: postfix
+        state: stopped
+        enabled: false
+         
+    - name: Increase the maximum number of system handle - nofile and nproc
+      template:
+        src: limits.j2
+        dest: /etc/security/limits.d/ansible_limits.conf
+
+    - name: Setting Up Selinux
+      selinux:
+        state: "{{ redhat.selinux.state }}"
+        policy: "{{ redhat.selinux.policy }}"
+      tags: selinux
+
+    - name: ensuring firewalld package is installed
+      yum:
+        name: firewalld
+        state: latest
+
+    - name: Starting firewalld service
+      systemd: 
+        name: firewalld
+        state: started
+        enabled: yes
+      tags: firewall
+    
+    - name: Allowing custom ssh firewalld port
+      firewalld: 
+        port: '{{ custom_ssh_port }}/tcp'
+        permanent: true
+        state: enabled
+      when: custom_ssh_port is defined
+      tags: firewall
+      notify: restart firewalld
+
+    - name: Allowing http firewalld service
+      firewalld: 
+        service: http
+        permanent: true
+        state: enabled
+      tags: firewall
+      notify: restart firewalld
+
+    - name: generating random routing table number
+      set_fact:
+        table_num: "{{ 100 | random(start=20) }}"
+      run_once: yes
+
+    - name: generating randome priority for route
+      set_fact:
+        priority: "{{ 500 | random(start=100) }}"
+      run_once: yes
+
+    - name: creating route entries for nic interface
+      template:
+        src: route.j2
+        dest: /etc/sysconfig/network-scripts/route-{{ item }}
+      with_items: "{{ ansible_interfaces[1:] }}"
+      when:
+        - item == 'eth0'
+
+    - name: creating rule table for nic interface
+      template:
+        src: rule.j2
+        dest: /etc/sysconfig/network-scripts/rule-{{ item }}
+      with_items: "{{ ansible_interfaces[1:] }}"
+      when:
+        - item == 'eth0'
+
+    - name: creating interface files for extra nics
+      template:
+        src: nic.j2
+        dest: /etc/sysconfig/network-scripts/ifcfg-{{ item }}
+      with_items: "{{ ansible_interfaces[1:] }}"
+      tags: nics
+    
+    - name: Restarting Machine
+      shell: sleep 2 && shutdown -r now "Ansible updates triggered"
+      async: 1
+      poll: 0
+      become: true
+      ignore_errors: true
+      tags: 
+        - reboot
+        - server_reboot
+      when: server_update.changed
+      register: server_reboot
+    
+    - name: Waiting for server to reboot and come back
+      wait_for: 
+        host: "{{ inventory_hostname }}"
+        state: started 
+        delay: 15 
+        timeout: 60
+      delegate_to: localhost
+      become: false
+      tags: reboot
+      when: server_reboot.changed
