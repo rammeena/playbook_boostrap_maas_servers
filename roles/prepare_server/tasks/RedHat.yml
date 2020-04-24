@@ -61,7 +61,7 @@
 
     - name: Rebooing Machine
       reboot:
-        msg: ""Reboot initiated by Ansible, event: system update"
+        msg: "Reboot initiated by Ansible, event: system update"
         reboot_timeout: 600
         post_reboot_delay: 300
       tags:
