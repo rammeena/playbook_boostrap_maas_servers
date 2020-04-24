@@ -1,17 +1,17 @@
 ---
 - block:
-    - name: cleaning up any unfinished / pending yum transactions
-      command: yum-complete-transaction --cleanup-only 
+    #- name: cleaning up any unfinished / pending yum transactions
+    #  command: yum-complete-transaction --cleanup-only 
 
     - name: Updating server using 'yum update'
       yum:
         name: "*"
         state: latest
         update_cache: yes
-        exclude: 
+        exclude:
           npm
           nodejs
-      tags: 
+      tags:
         - server_update
         - yum_update
       register: server_update
@@ -29,13 +29,13 @@
 
     - name: completing any unfinished / pending yum transactions
       command: yum-complete-transaction
-    
+
     - name: disabling postfix service - user can enable if required
       systemd:
         name: postfix
         state: stopped
         enabled: false
-         
+
     - name: Increase the maximum number of system handle - nofile and nproc
       template:
         src: limits.j2
@@ -53,14 +53,14 @@
         state: latest
 
     - name: Starting firewalld service
-      systemd: 
+      systemd:
         name: firewalld
         state: started
         enabled: yes
       tags: firewall
-    
+
     - name: Allowing custom ssh firewalld port
-      firewalld: 
+      firewalld:
         port: '{{ custom_ssh_port }}/tcp'
         permanent: true
         state: enabled
@@ -69,7 +69,7 @@
       notify: restart firewalld
 
     - name: Allowing http firewalld service
-      firewalld: 
+      firewalld:
         service: http
         permanent: true
         state: enabled
@@ -108,24 +108,24 @@
         dest: /etc/sysconfig/network-scripts/ifcfg-{{ item }}
       with_items: "{{ ansible_interfaces[1:] }}"
       tags: nics
-    
+
     - name: Restarting Machine
       shell: sleep 2 && shutdown -r now "Ansible updates triggered"
       async: 1
       poll: 0
       become: true
       ignore_errors: true
-      tags: 
+      tags:
         - reboot
         - server_reboot
       when: server_update.changed
       register: server_reboot
-    
+
     - name: Waiting for server to reboot and come back
-      wait_for: 
+      wait_for:
         host: "{{ inventory_hostname }}"
-        state: started 
-        delay: 15 
+        state: started
+        delay: 15
         timeout: 60
       delegate_to: localhost
       become: false
