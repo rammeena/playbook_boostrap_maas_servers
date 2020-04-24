@@ -21,10 +21,11 @@
 
     - name: Installing some necessary packages
       yum:
-        name: "{{ item }}"
+        # name: "{{ item }}"
+        name: "{{ redhat.packages }}"
         state: latest
         update_cache: yes
-      with_items: "{{ redhat.packages }}"
+      # with_items: "{{ redhat.packages }}"
       tags: basic_packages
 
     - name: completing any unfinished / pending yum transactions
