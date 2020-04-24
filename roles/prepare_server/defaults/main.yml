@@ -21,11 +21,12 @@ redhat:
     - atop
     - bc
     - psmisc
+    - iperf3
 
-  selinux: 
+  selinux:
     state: disabled
     policy: targeted
-  
+
 debian:
   packages:
     - wget
