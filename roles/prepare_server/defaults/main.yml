@@ -22,7 +22,7 @@ redhat:
     - bc
     - psmisc
     - iperf3
-    - yum install yum-plugin-priorities
+    - yum-plugin-priorities
 
   selinux:
     state: disabled
