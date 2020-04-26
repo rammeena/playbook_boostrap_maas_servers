@@ -1,6 +1,7 @@
 ---
 # defaults file for roles/base
 custom_ssh_port: 33433
+COMMON_ROOT_PASSWORD: 'Virtual650#'
 soft_files_limit: 65536
 hard_files_limit: 65536
 soft_process_limit: 65536
