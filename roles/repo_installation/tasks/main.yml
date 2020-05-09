@@ -1,9 +1,0 @@
----
-# tasks file for repo
-- name: Install and enable epel repo on CentOS 7 server
-  yum:
-    name: epel-release
-    state: present
-    update_cache: yes
-  when: (ansible_distribution == "RedHat" and ansible_distribution_major_version == "7") or 
-        (ansible_distribution == "CentOS" and ansible_distribution_major_version == "7")
